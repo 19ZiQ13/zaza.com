@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Photos</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="photos-page">
+
+<div id="auth-gate">
+    <div class="auth-card">
+        <h1>LOCKED</h1>
+        <input type="password" id="pass-input" placeholder="••••">
+        <button class="unlock-btn" onclick="unlockHub()">UNLOCK</button>
+    </div>
+</div>
+
+<nav class="nav-pill">
+    <a href="index.html">Home</a>
+    <a href="message.html">Message</a>
+    <a href="memories.html">Memories</a>
+    <a href="photos.html">Photos</a>
+    <a href="awesome.html">Awesome</a>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</nav>
+
+<main class="container">
+    <h1 style="text-align:center; text-shadow:0 0 20px var(--neon);">Photo Gallery</h1>
+
+    <div id="photos-list" class="photo-grid"></div>
+
+    <button class="add-pill-btn" onclick="addItem('photos')">
+        + ADD PHOTOS
+    </button>
+</main>
+
+<script src="js/script.js"></script>
+</body>
+</html>

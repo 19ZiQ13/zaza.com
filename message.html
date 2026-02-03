@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sanctuary | Message</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="message-page">
+<div id="auth-gate">
+    <div class="auth-card">
+        <h1>Access Key</h1>
+        <input type="password" id="pass-input" placeholder="••••">
+        <button class="unlock-btn" onclick="unlockHub()">Unlock</button>
+    </div>
+</div>
+
+<nav class="nav-pill">
+    <a href="index.html">Home</a>
+    <a href="message.html">Message</a>
+    <a href="memories.html">Memories</a>
+    <a href="photos.html">Photos</a>
+    <a href="awesome.html">Awesome</a>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</nav>
+
+<main class="container">
+    <div class="speech-bubble" style="max-width:800px; margin:0 auto;">
+        <h2 style="color:var(--neon); margin-top:0;">To You,</h2>
+        <p id="typing-text" style="font-size:1.2rem; line-height:1.6;">Happy Birthday! I wanted to build something more permanent than a text and cooler than a card. This hub is a place for all our best moments.</p>
+        <p style="font-size:1.2rem; line-height:1.6; margin-top:20px;">Check out the other tabs to see what I've added, and feel free to add more yourself using the "+" button!</p>
+        <p style="margin-top:30px; font-weight:900;">— With Love</p>
+    </div>
+</main>
+
+<script src="js/script.js"></script>
+<script>
+    // Typing effect for the first paragraph
+    document.addEventListener("DOMContentLoaded", () => {
+        if (localStorage.getItem('hub_unlocked') === 'true') {
+            const textElement = document.getElementById('typing-text');
+            const originalText = textElement.textContent;
+            textElement.textContent = '';
+            let i = 0;
+
+            function typeWriter() {
+                if (i < originalText.length) {
+                    textElement.textContent += originalText.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 30);
+                }
+            }
+
+            setTimeout(typeWriter, 500);
+        }
+    });
+</script>
+</body>
+</html>
