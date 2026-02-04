@@ -29,26 +29,26 @@
         <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
             Dear you,
             Happy 18th birthday.
-            What a long way you’ve already come, right?
-            It’s almost unbelievable that I’ve known you for a year now—and that I get to be here as you step into such an important milestone.
-            I wanted to give you something that wouldn’t disappear after today—something you could come back to.
+            What a long way you've already come, right?
+            It's almost unbelievable that I've known you for a year now—and that I get to be here as you step into such an important milestone.
+            I wanted to give you something that wouldn't disappear after today—something you could come back to.
             Not just words to read once, but a space to exist in.
             A place where you can create, wander, look back on good moments, or simply rest when everything feels like too much.
-            Somewhere that gently reminds you that you’re not alone, that you belong, and that your presence matters more than you probably realize.
+            Somewhere that gently reminds you that you're not alone, that you belong, and that your presence matters more than you probably realize.
         </p>
         <br>
         <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
-            I’m really grateful I met you.
-            It happened in a way that felt unplanned—almost incidental—and yet it’s become something I can’t imagine being random.
+            I'm really grateful I met you.
+            It happened in a way that felt unplanned—almost incidental—and yet it's become something I can't imagine being random.
             Some people pass through your life quickly; others arrive quietly and stay in ways you only understand later.
-            You’re the kind of person who listens without rushing, who shows up without needing to be asked,
+            You're the kind of person who listens without rushing, who shows up without needing to be asked,
             who somehow follows every half-formed thought, every strange idea, every sudden tangent—and makes space for all of it.
             That kind of understanding is rare, and I never take it for granted.
         </p>
         <br>
         <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
-            What I’m trying to give you with this isn’t just a birthday gesture.
-            It’s something that holds what words don’t always manage to say:
+            What I'm trying to give you with this isn't just a birthday gesture.
+            It's something that holds what words don't always manage to say:
             appreciation, trust, the comfort of being known.
             Something that says you mattered enough for this to be built for you.
             Because you do—more than you realize most days.
@@ -58,11 +58,11 @@
         <br>
         <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
             There are people who bring light into your life without trying to.
-            People you find yourself turning toward instinctively, the way sunflowers turn toward the sun—not because they’re told to,
-            but because that’s where warmth lives. You’ve been that kind of presence for me, Sunny,
+            People you find yourself turning toward instinctively, the way sunflowers turn toward the sun—not because they're told to,
+            but because that's where warmth lives. You've been that kind of presence for me, Sunny,
             even in moments you may not notice—through the hard days, the heavy thoughts, and everything in between.
             And I hope, quietly and consistently, I can be that for you too (at least come close to it).
-            Someone who stands nearby, reminding you that even when life feels sharp or overwhelming, you don’t have to face it alone.
+            Someone who stands nearby, reminding you that even when life feels sharp or overwhelming, you don't have to face it alone.
         </p>
         <br>
         <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
@@ -70,8 +70,8 @@
             Not because everything suddenly changes—but because the world opens a little wider,
             and the choices begin to feel more like your own.
             These years are for exploring, for becoming, for learning who you are when no one else is deciding for you.
-            There is so much ahead of you, and the world hasn’t yet seen all that you are capable of becoming.
-            I’m really excited to watch it unfold.
+            There is so much ahead of you, and the world hasn't yet seen all that you are capable of becoming.
+            I'm really excited to watch it unfold.
         </p>
         <br>
         <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
@@ -80,9 +80,9 @@
             Let it remind you of how deeply you are valued.
         </p>
         <br>
-        <p style="margin-top:30px; font-weight:900;">
+        <p class="typing-text" style="margin-top:30px; font-weight:900;">
             — With all my love,
-                                Z 🌻
+            Z 🌻
         </p>
     </div>
 </main>
@@ -93,16 +93,14 @@
     document.addEventListener("DOMContentLoaded", () => {
         if (localStorage.getItem('hub_unlocked') === 'true') {
 
-            // Define each paragraph: its target element ID and the text to type
-            const paragraphs = [
-                {
-                    class: 'typing-text',
-                },
-            ];
+            // Get all paragraphs with typing-text class
+            const typingElements = document.querySelectorAll('.typing-text');
 
-            // Clear all target elements before typing starts
-            paragraphs.forEach(p => {
-                document.getElementById(p.id).textContent = '';
+            // Store original text and clear elements
+            const paragraphs = Array.from(typingElements).map(el => {
+                const text = el.textContent.trim();
+                el.textContent = '';
+                return { element: el, text: text };
             });
 
             // Recursive typewriter that chains paragraphs one after another
@@ -111,7 +109,6 @@
                 if (paraIndex >= paragraphs.length) return;
 
                 const current = paragraphs[paraIndex];
-                const el = document.getElementById(current.id);
 
                 // If we've finished the current paragraph, move to the next after a short pause
                 if (charIndex >= current.text.length) {
@@ -120,7 +117,7 @@
                 }
 
                 // Type one character
-                el.textContent += current.text.charAt(charIndex);
+                current.element.textContent += current.text.charAt(charIndex);
 
                 // Schedule the next character
                 setTimeout(() => typeSequence(paraIndex, charIndex + 1), 30);
