@@ -26,15 +26,53 @@
 <main class="container">
     <div class="speech-bubble" style="max-width:800px; margin:0 auto;">
         <h2 style="color:var(--neon); margin-top:0;">To You,</h2>
-        <p id="typing-text" style="font-size:1.2rem; line-height:1.6;">
+        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
             Dear you,
             Happy 18th birthday.
-            What a long way you’ve already come, right? It’s almost unbelievable that I’ve known you for a year now—and that I get to be here as you step into such an important milestone. I wanted to give you something that wouldn’t disappear after today—something you could come back to. Not just words to read once, but a space to exist in. A place where you can create, wander, look back on good moments, or simply rest when everything feels like too much. Somewhere that gently reminds you that you’re not alone, that you belong, and that your presence matters more than you probably realize.
-            I’m really grateful I met you. It happened in a way that felt unplanned—almost incidental—and yet it’s become something I can’t imagine being random. Some people pass through your life quickly; others arrive quietly and stay in ways you only understand later. You’re the kind of person who listens without rushing, who shows up without needing to be asked, who somehow follows every half-formed thought, every strange idea, every sudden tangent—and makes space for all of it. That kind of understanding is rare, and I never take it for granted.
-            What I’m trying to give you with this isn’t just a birthday gesture. It’s something that holds what words don’t always manage to say: appreciation, trust, the comfort of being known. Something that says you mattered enough for this to be built for you. Because you do—more than you realize most days. And because the way you exist in my life—steady, thoughtful, present—means more than I could ever fit into a single message.
-            There are people who bring light into your life without trying to. People you find yourself turning toward instinctively, the way sunflowers turn toward the sun—not because they’re told to, but because that’s where warmth lives. You’ve been that kind of presence for me, Sunny, even in moments you may not notice—through the hard days, the heavy thoughts, and everything in between. And I hope, quietly and consistently, I can be that for you too (at least come close to it). Someone who stands nearby, reminding you that even when life feels sharp or overwhelming, you don’t have to face it alone.
-            Turning eighteen feels like standing at the edge of something new. Not because everything suddenly changes—but because the world opens a little wider, and the choices begin to feel more like your own. These years are for exploring, for becoming, for learning who you are when no one else is deciding for you. There is so much ahead of you, and the world hasn’t yet seen all that you are capable of becoming. I’m really excited to watch it unfold.
-            So make this place yours. Shape it, add to it, let it grow alongside you. And whenever you need a reminder—on the loud days or the quiet ones—come back here. Let it remind you of how deeply you are valued.
+            What a long way you’ve already come, right?
+            It’s almost unbelievable that I’ve known you for a year now—and that I get to be here as you step into such an important milestone.
+            I wanted to give you something that wouldn’t disappear after today—something you could come back to.
+            Not just words to read once, but a space to exist in.
+            A place where you can create, wander, look back on good moments, or simply rest when everything feels like too much.
+            Somewhere that gently reminds you that you’re not alone, that you belong, and that your presence matters more than you probably realize.
+        </p>
+        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
+            I’m really grateful I met you.
+            It happened in a way that felt unplanned—almost incidental—and yet it’s become something I can’t imagine being random.
+            Some people pass through your life quickly; others arrive quietly and stay in ways you only understand later.
+            You’re the kind of person who listens without rushing, who shows up without needing to be asked,
+            who somehow follows every half-formed thought, every strange idea, every sudden tangent—and makes space for all of it.
+            That kind of understanding is rare, and I never take it for granted.
+        </p>
+        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
+            What I’m trying to give you with this isn’t just a birthday gesture.
+            It’s something that holds what words don’t always manage to say:
+            appreciation, trust, the comfort of being known.
+            Something that says you mattered enough for this to be built for you.
+            Because you do—more than you realize most days.
+            And because the way you exist in my life—steady, thoughtful,
+            present—means more than I could ever fit into a single message.
+        </p>
+        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
+            There are people who bring light into your life without trying to.
+            People you find yourself turning toward instinctively, the way sunflowers turn toward the sun—not because they’re told to,
+            but because that’s where warmth lives. You’ve been that kind of presence for me, Sunny,
+            even in moments you may not notice—through the hard days, the heavy thoughts, and everything in between.
+            And I hope, quietly and consistently, I can be that for you too (at least come close to it).
+            Someone who stands nearby, reminding you that even when life feels sharp or overwhelming, you don’t have to face it alone.
+        </p>
+        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
+            Turning eighteen feels like standing at the edge of something new.
+            Not because everything suddenly changes—but because the world opens a little wider,
+            and the choices begin to feel more like your own.
+            These years are for exploring, for becoming, for learning who you are when no one else is deciding for you.
+            There is so much ahead of you, and the world hasn’t yet seen all that you are capable of becoming.
+            I’m really excited to watch it unfold.
+        </p>
+        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
+            So make this place yours. Shape it, add to it, let it grow alongside you.
+            And whenever you need a reminder—on the loud days or the quiet ones—come back here.
+            Let it remind you of how deeply you are valued.
         </p>
         <p style="margin-top:30px; font-weight:900;">
             — With all my love,
@@ -52,17 +90,8 @@
             // Define each paragraph: its target element ID and the text to type
             const paragraphs = [
                 {
-                    id: 'typing-text-1',
-                    text: 'Happy Birthday! I wanted to build something more permanent than a text and cooler than a card. This hub is a place for all our best moments.'
+                    class: 'typing-text',
                 },
-                {
-                    id: 'typing-text-2',
-                    text: 'Check out the other tabs to see what I\'ve added, and feel free to add more yourself using the "+" button!'
-                },
-                {
-                    id: 'typing-text-3',
-                    text: '— With Love Z'
-                }
             ];
 
             // Clear all target elements before typing starts
