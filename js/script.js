@@ -1,6 +1,106 @@
 const ACCESS_KEY = "1234";  // Main site password
 
+// ============================================================
+// INDEXEDDB STORAGE (replaces localStorage for photos)
+// Gives hundreds of MB instead of ~5MB
+// ============================================================
+const DB_NAME = 'SanctuaryDB';
+const DB_VERSION = 1;
+let db = null;
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        if (db) { resolve(db); return; }
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = e => {
+            const database = e.target.result;
+            ['memories', 'awesome', 'photos'].forEach(store => {
+                if (!database.objectStoreNames.contains(store)) {
+                    database.createObjectStore(store, { keyPath: 'id', autoIncrement: true });
+                }
+            });
+        };
+        req.onsuccess = e => { db = e.target.result; resolve(db); };
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function dbGetAll(category) {
+    // Fallback: if category is memories/awesome, still use localStorage
+    if (category !== 'photos') {
+        return JSON.parse(localStorage.getItem(category) || "[]");
+    }
+    const database = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = database.transaction(category, 'readonly');
+        const req = tx.objectStore(category).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function dbAdd(category, entry) {
+    if (category !== 'photos') {
+        // memories/awesome still use localStorage
+        let store = JSON.parse(localStorage.getItem(category) || "[]");
+        store.push(entry);
+        localStorage.setItem(category, JSON.stringify(store));
+        return;
+    }
+    const database = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = database.transaction(category, 'readwrite');
+        tx.objectStore(category).add(entry);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+async function dbDelete(category, id) {
+    if (category !== 'photos') {
+        let store = JSON.parse(localStorage.getItem(category) || "[]");
+        store.splice(id, 1);
+        localStorage.setItem(category, JSON.stringify(store));
+        return;
+    }
+    const database = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = database.transaction(category, 'readwrite');
+        tx.objectStore(category).delete(id);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+// ============================================================
+// IMAGE COMPRESSION (canvas resize before saving)
+// Shrinks photos to max 1200px wide, quality 0.82 — looks
+// great but takes up ~10x less space than the original
+// ============================================================
+function compressImage(file, maxWidth = 1200, quality = 0.82) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            let { width, height } = img;
+            if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            URL.revokeObjectURL(url);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = url;
+    });
+}
+
+// ============================================================
 // 1. AUTHENTICATION
+// ============================================================
 window.unlockHub = function() {
     const input = document.getElementById('pass-input');
     if (input && input.value === ACCESS_KEY) {
@@ -23,7 +123,9 @@ window.logout = () => {
     location.reload();
 };
 
-// 2. MODAL SYSTEM (Adding Content)
+// ============================================================
+// 2. MODAL SYSTEM
+// ============================================================
 window.addItem = function(category) {
     const isPhoto = category === 'photos';
     const overlay = document.createElement('div');
@@ -34,65 +136,114 @@ window.addItem = function(category) {
 
     overlay.innerHTML = `
         <div class="sanctuary-card modal-content">
-            <h2 style="margin:0; text-align:center;">New ${category.slice(0,-1)}</h2>
-            
+            <h2 style="margin:0; text-align:center;">New ${isPhoto ? 'Photos' : category.slice(0,-1)}</h2>
+
             <span class="modal-label">From:</span>
             <input type="text" id="m-author" class="sanctuary-input" placeholder="Your Name">
-            
+
             <span class="modal-label">Date:</span>
             <input type="date" id="m-date" class="sanctuary-input" value="${today}">
-            
+
             ${isPhoto ? `
-                <span class="modal-label">Upload File:</span>
-                <input type="file" id="m-file" class="sanctuary-input" accept="image/*" style="padding:10px;">
-                <span class="modal-label">OR Image URL:</span>
+                <span class="modal-label">Upload Photos (select as many as you want):</span>
+                <input type="file" id="m-file" class="sanctuary-input" accept="image/*" multiple style="padding:10px;">
+                <div id="m-preview" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
+                <span class="modal-label">OR Image URL (single):</span>
                 <input type="text" id="m-content" class="sanctuary-input" placeholder="https://...">
-                <span class="modal-label">Caption:</span>
-                <textarea id="m-caption" class="sanctuary-input" rows="2" placeholder="Describe this photo..."></textarea>
+                <span class="modal-label">Caption (applies to all):</span>
+                <textarea id="m-caption" class="sanctuary-input" rows="2" placeholder="Describe these photos..."></textarea>
             ` : `
                 <span class="modal-label">Content:</span>
                 <textarea id="m-content" class="sanctuary-input" rows="4" placeholder="Write something..."></textarea>
             `}
-            
-            <div style="display:flex; gap:10px;">
+
+            <div id="m-error" style="color:#ff3b30; font-size:0.8rem; margin-top:8px; display:none;"></div>
+
+            <div style="display:flex; gap:10px; margin-top:10px;">
                 <button class="pill-btn-white" style="background:rgba(255,255,255,0.1); color:white;" onclick="closeModal()">Cancel</button>
-                <button class="pill-btn-white" onclick="handleSubmission('${category}')">Save Entry</button>
+                <button class="pill-btn-white" id="m-save-btn" onclick="handleSubmission('${category}')">Save</button>
             </div>
         </div>
     `;
     document.body.appendChild(overlay);
+
+    if (isPhoto) {
+        document.getElementById('m-file').addEventListener('change', function() {
+            const preview = document.getElementById('m-preview');
+            preview.innerHTML = '';
+            Array.from(this.files).forEach(file => {
+                const url = URL.createObjectURL(file);
+                preview.innerHTML += `<img src="${url}" style="height:60px; border-radius:8px; object-fit:cover;">`;
+            });
+            const count = this.files.length;
+            if (count > 0) {
+                document.getElementById('m-save-btn').textContent = `Save ${count} Photo${count > 1 ? 's' : ''}`;
+            }
+        });
+    }
 };
 
 window.handleSubmission = async (category) => {
     const author = document.getElementById('m-author').value;
     const date = document.getElementById('m-date').value;
-    let content = document.getElementById('m-content').value;
     const fileInput = document.getElementById('m-file');
     const caption = document.getElementById('m-caption') ? document.getElementById('m-caption').value : "";
 
-    // File handling
-    if (category === 'photos' && fileInput && fileInput.files[0]) {
-        content = await toBase64(fileInput.files[0]);
-    }
+    if (category === 'photos') {
+        const files = fileInput && fileInput.files.length > 0 ? Array.from(fileInput.files) : null;
+        const urlInput = document.getElementById('m-content') ? document.getElementById('m-content').value.trim() : '';
 
-    if (author && content) {
-        const entry = { author, content, caption, date };
-        let store = JSON.parse(localStorage.getItem(category) || "[]");
-        store.push(entry);
-        localStorage.setItem(category, JSON.stringify(store));
-        location.reload();
+        if (!author) { showModalError('Please enter a name.'); return; }
+        if (!files && !urlInput) { showModalError('Please upload a photo or enter a URL.'); return; }
+
+        const saveBtn = document.getElementById('m-save-btn');
+        saveBtn.disabled = true;
+
+        if (files) {
+            let saved = 0;
+            for (let i = 0; i < files.length; i++) {
+                saveBtn.textContent = `Saving ${i + 1} of ${files.length}...`;
+                try {
+                    const content = await compressImage(files[i]);
+                    await dbAdd(category, { author, content, caption, date });
+                    saved++;
+                } catch(e) {
+                    showModalError(`Couldn't save: ${files[i].name}`);
+                }
+            }
+            location.reload();
+        } else {
+            try {
+                await dbAdd(category, { author, content: urlInput, caption, date });
+                location.reload();
+            } catch(e) {
+                showModalError('Something went wrong saving that URL.');
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
+            }
+        }
+    } else {
+        const content = document.getElementById('m-content').value;
+        if (author && content) {
+            try {
+                await dbAdd(category, { author, content, caption, date });
+                location.reload();
+            } catch(e) {
+                showModalError('Storage full! Please delete some old entries first.');
+            }
+        }
     }
 };
 
-const toBase64 = file => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-});
+function showModalError(msg) {
+    const el = document.getElementById('m-error');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
 
-// 3. CUSTOM DELETE MODAL (No more browser prompt)
-window.askDelete = (cat, idx) => {
+// ============================================================
+// 3. DELETE MODAL
+// ============================================================
+window.askDelete = (cat, id) => {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.id = 'delete-modal';
@@ -102,24 +253,24 @@ window.askDelete = (cat, idx) => {
             <p style="opacity:0.7; margin:20px 0;">Are you sure? This cannot be undone.</p>
             <div style="display:flex; gap:10px;">
                 <button class="pill-btn-white" style="background:rgba(255,255,255,0.1); color:white;" onclick="closeDeleteModal()">Cancel</button>
-                <button class="pill-btn-white" style="background:#ff3b30; color:white;" onclick="confirmDelete('${cat}', ${idx})">Delete</button>
+                <button class="pill-btn-white" style="background:#ff3b30; color:white;" onclick="confirmDelete('${cat}', ${JSON.stringify(id)})">Delete</button>
             </div>
         </div>
     `;
     document.body.appendChild(overlay);
 };
 
-window.confirmDelete = (cat, idx) => {
-    let store = JSON.parse(localStorage.getItem(cat) || "[]");
-    store.splice(idx, 1);
-    localStorage.setItem(cat, JSON.stringify(store));
+window.confirmDelete = async (cat, id) => {
+    await dbDelete(cat, id);
     location.reload();
 };
 
 window.closeModal = () => document.getElementById('active-modal').remove();
 window.closeDeleteModal = () => document.getElementById('delete-modal').remove();
 
+// ============================================================
 // 5. CUSTOM CURSOR
+// ============================================================
 function initCustomCursor() {
     const cursor = document.createElement('div');
     cursor.className = 'custom-cursor';
@@ -139,13 +290,11 @@ function initCustomCursor() {
     });
 
     function animate() {
-        // Smooth cursor follow
         cursorX += (mouseX - cursorX) * 0.15;
         cursorY += (mouseY - cursorY) * 0.15;
         cursor.style.left = cursorX + 'px';
         cursor.style.top = cursorY + 'px';
 
-        // Even smoother dot follow
         dotX += (mouseX - dotX) * 0.08;
         dotY += (mouseY - dotY) * 0.08;
         cursorDot.style.left = dotX + 'px';
@@ -155,7 +304,6 @@ function initCustomCursor() {
     }
     animate();
 
-    // Cursor expansion on hover
     const interactiveElements = document.querySelectorAll('a, button, input, textarea, .sanctuary-card');
     interactiveElements.forEach(el => {
         el.addEventListener('mouseenter', () => {
@@ -168,30 +316,31 @@ function initCustomCursor() {
     });
 }
 
+// ============================================================
 // 6. PARALLAX SCROLLING
+// ============================================================
 function initParallax() {
     document.addEventListener('scroll', () => {
         const scrolled = window.pageYOffset;
         const cards = document.querySelectorAll('.sanctuary-card');
-
         cards.forEach((card, index) => {
             const speed = (index % 3 + 1) * 0.02;
-            const yPos = -(scrolled * speed);
-            card.style.transform = `translateY(${yPos}px)`;
+            card.style.transform = `translateY(${-(scrolled * speed)}px)`;
         });
     });
 }
 
-// 7. INITIALIZE
-document.addEventListener("DOMContentLoaded", () => {
+// ============================================================
+// 7. INITIALIZE + RENDER
+// ============================================================
+document.addEventListener("DOMContentLoaded", async () => {
     const isUnlocked = localStorage.getItem('hub_unlocked') === 'true';
     const gate = document.getElementById('auth-gate');
 
     if (isUnlocked) {
         if (gate) gate.remove();
-        renderContent();
+        await renderContent();
 
-        // Initialize effects after content is loaded
         setTimeout(() => {
             initCustomCursor();
             initParallax();
@@ -203,25 +352,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-function renderContent() {
-    ['memories', 'awesome', 'photos'].forEach(cat => {
+async function renderContent() {
+    for (const cat of ['memories', 'awesome', 'photos']) {
         const list = document.getElementById(`${cat}-list`);
-        if (!list) return;
-        const data = JSON.parse(localStorage.getItem(cat) || "[]");
-        list.innerHTML = data.map((item, i) => `
-            <div class="sanctuary-card">
-                <div class="card-header">
-                    <span class="author-tag">FROM: ${item.author}</span>
-                    <span class="date-tag">${item.date}</span>
-                    <button class="del-btn" onclick="askDelete('${cat}', ${i})">×</button>
+        if (!list) continue;
+
+        const data = await dbGetAll(cat);
+
+        list.innerHTML = data.map((item) => {
+            // IndexedDB items have an auto 'id', localStorage items use array index
+            const deleteId = item.id !== undefined ? item.id : data.indexOf(item);
+            return `
+                <div class="sanctuary-card">
+                    <div class="card-header">
+                        <span class="author-tag">FROM: ${item.author}</span>
+                        <span class="date-tag">${item.date}</span>
+                        <button class="del-btn" onclick="askDelete('${cat}', ${deleteId})">×</button>
+                    </div>
+                    <div class="card-body">
+                        ${cat === 'photos' ? `
+                            <img src="${item.content}">
+                            ${item.caption ? `<p style="margin-top:15px; font-style:italic; opacity:0.8;">${item.caption}</p>` : ''}
+                        ` : `<p>${item.content}</p>`}
+                    </div>
                 </div>
-                <div class="card-body">
-                    ${cat === 'photos' ? `
-                        <img src="${item.content}">
-                        ${item.caption ? `<p style="margin-top:15px; font-style:italic; opacity:0.8;">${item.caption}</p>` : ''}
-                    ` : `<p>${item.content}</p>`}
-                </div>
-            </div>
-        `).join('');
-    });
+            `;
+        }).join('');
+    }
 }
