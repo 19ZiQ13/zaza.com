@@ -186,16 +186,11 @@ window.addItem = function(category) {
                     </button>
                 </div>
 
-                <!-- emoji picker panel -->
+                <!-- emoji picker panel — buttons injected via JS to avoid HTML encoding issues -->
                 <div id="panel-emoji" style="display:flex; flex-wrap:wrap; gap:6px; padding:10px; background:rgba(0,0,0,0.3); border-radius:14px;">
-                    ${EMOJI_LIST.map(e => `
-                        <button type="button" onclick="selectEmoji('${e}')"
-                            style="font-size:1.4rem; background:none; border:2px solid transparent; border-radius:8px; padding:4px 6px; cursor:pointer; transition:all 0.15s;"
-                            class="emoji-opt">${e}</button>
-                    `).join('')}
+                    <div id="emoji-btn-container" style="display:flex; flex-wrap:wrap; gap:6px; width:100%;"></div>
                     <div style="width:100%; margin-top:6px;">
-                        <input type="text" id="emoji-custom" class="sanctuary-input" placeholder="Or type any emoji / paste one..." style="font-size:1.2rem;"
-                            oninput="selectEmoji(this.value)">
+                        <input type="text" id="emoji-custom" class="sanctuary-input" placeholder="Or type any emoji / paste one..." style="font-size:1.2rem;">
                     </div>
                 </div>
 
@@ -235,7 +230,29 @@ window.addItem = function(category) {
     }
 
     if (isTextCat) {
-        // Set default selected emoji
+        // Build emoji buttons via JS (avoids HTML attribute encoding issues with emoji chars)
+        const container = document.getElementById('emoji-btn-container');
+        if (container) {
+            EMOJI_LIST.forEach(e => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = e;
+                btn.className = 'emoji-opt';
+                btn.style.cssText = 'font-size:1.4rem; background:none; border:2px solid transparent; border-radius:8px; padding:4px 6px; cursor:pointer; transition:all 0.15s;';
+                btn.addEventListener('click', () => selectEmoji(e));
+                container.appendChild(btn);
+            });
+        }
+
+        // Wire up custom emoji input
+        const customInput = document.getElementById('emoji-custom');
+        if (customInput) {
+            customInput.addEventListener('input', function() {
+                if (this.value.trim()) selectEmoji(this.value.trim());
+            });
+        }
+
+        // Set default
         selectEmoji('❤️');
 
         const accentFile = document.getElementById('m-accent-file');
