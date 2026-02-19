@@ -361,11 +361,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 async function renderContent() {
+    // ── MEMORIES ── journal-style entries with a decorative quote mark
     const memoriesList = document.getElementById('memories-list');
     if (memoriesList) {
         const data = await dbGetAll('memories');
         memoriesList.innerHTML = data.map((item, i) => `
             <div class="sanctuary-card memory-entry" style="position:relative; overflow:visible; margin-bottom:30px;">
+                <!-- giant decorative quote mark -->
                 <div style="position:absolute; top:-18px; left:24px; font-size:5rem; line-height:1; color:var(--neon); opacity:0.25; font-family:Georgia,serif; pointer-events:none; user-select:none;">"</div>
 
                 <div style="padding:30px 30px 20px;">
@@ -388,6 +390,7 @@ async function renderContent() {
         `).join('');
     }
 
+    // ── AWESOME ── bold highlight cards with a star accent
     const awesomeList = document.getElementById('awesome-list');
     if (awesomeList) {
         const data = await dbGetAll('awesome');
@@ -413,6 +416,7 @@ async function renderContent() {
         `).join('');
     }
 
+    // ── PHOTOS ── clean image-only cards, delete on hover
     const photoList = document.getElementById('photos-list');
     if (!photoList) return;
     const photos = await dbGetAll('photos');
