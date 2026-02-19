@@ -359,27 +359,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 });
 
+
 async function renderContent() {
-    // Memories and Awesome — full card with header as before
-    for (const cat of ['memories', 'awesome']) {
-        const list = document.getElementById(`${cat}-list`);
-        if (!list) continue;
-        const data = await dbGetAll(cat);
-        list.innerHTML = data.map((item, i) => `
-            <div class="sanctuary-card">
-                <div class="card-header">
-                    <span class="author-tag">FROM: ${item.author}</span>
-                    <span class="date-tag">${item.date}</span>
-                    <button class="del-btn" onclick="askDelete('${cat}', ${i})">×</button>
-                </div>
-                <div class="card-body">
-                    <p>${item.content}</p>
+    const memoriesList = document.getElementById('memories-list');
+    if (memoriesList) {
+        const data = await dbGetAll('memories');
+        memoriesList.innerHTML = data.map((item, i) => `
+            <div class="sanctuary-card memory-entry" style="position:relative; overflow:visible; margin-bottom:30px;">
+                <div style="position:absolute; top:-18px; left:24px; font-size:5rem; line-height:1; color:var(--neon); opacity:0.25; font-family:Georgia,serif; pointer-events:none; user-select:none;">"</div>
+
+                <div style="padding:30px 30px 20px;">
+                    <p style="font-size:1.05rem; line-height:1.8; margin:0 0 20px; font-style:italic; color:rgba(255,255,255,0.88);">${item.content}</p>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.08); padding-top:14px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="width:32px; height:32px; border-radius:50%; background:var(--neon); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:0.75rem; color:#000; flex-shrink:0;">
+                                ${item.author.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div style="font-weight:800; font-size:0.8rem; color:var(--neon);">${item.author}</div>
+                                <div style="font-size:0.7rem; opacity:0.4;">${item.date}</div>
+                            </div>
+                        </div>
+                        <button class="del-btn" onclick="askDelete('memories', ${i})">×</button>
+                    </div>
                 </div>
             </div>
         `).join('');
     }
 
-    // Photos — clean image-only cards, delete button overlaid on hover
+    const awesomeList = document.getElementById('awesome-list');
+    if (awesomeList) {
+        const data = await dbGetAll('awesome');
+        awesomeList.innerHTML = data.map((item, i) => `
+            <div class="sanctuary-card awesome-entry" style="margin-bottom:24px; position:relative;">
+
+                <!-- neon accent bar on the left -->
+                <div style="position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--neon); border-radius:4px 0 0 4px; box-shadow:0 0 10px var(--neon);"></div>
+
+                <div style="padding:22px 24px 22px 30px; display:flex; align-items:flex-start; gap:16px;">
+                    <!-- star icon -->
+                    <div style="font-size:1.6rem; line-height:1; flex-shrink:0; margin-top:2px;">⭐</div>
+
+                    <div style="flex:1;">
+                        <p style="margin:0 0 14px; font-size:1rem; line-height:1.7; color:rgba(255,255,255,0.9); font-weight:500;">${item.content}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.72rem; font-weight:800; color:var(--neon); text-transform:uppercase; letter-spacing:1px;">${item.author} · ${item.date}</span>
+                            <button class="del-btn" onclick="askDelete('awesome', ${i})">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
     const photoList = document.getElementById('photos-list');
     if (!photoList) return;
     const photos = await dbGetAll('photos');
@@ -395,7 +428,6 @@ async function renderContent() {
         </div>
     `).join('');
 
-    // Show delete button on hover
     photoList.querySelectorAll('.photo-card').forEach(card => {
         const btn = card.querySelector('.photo-del-btn');
         card.addEventListener('mouseenter', () => btn.style.opacity = '1');
