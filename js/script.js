@@ -1,8 +1,7 @@
-const ACCESS_KEY = "1234";  // Main site password
+const ACCESS_KEY = "1234";
 
 // ============================================================
-// INDEXEDDB STORAGE (replaces localStorage for photos)
-// Gives hundreds of MB instead of ~5MB
+// INDEXEDDB STORAGE
 // ============================================================
 const DB_NAME = 'SanctuaryDB';
 const DB_VERSION = 1;
@@ -26,7 +25,6 @@ function openDB() {
 }
 
 async function dbGetAll(category) {
-    // Fallback: if category is memories/awesome, still use localStorage
     if (category !== 'photos') {
         return JSON.parse(localStorage.getItem(category) || "[]");
     }
@@ -41,7 +39,6 @@ async function dbGetAll(category) {
 
 async function dbAdd(category, entry) {
     if (category !== 'photos') {
-        // memories/awesome still use localStorage
         let store = JSON.parse(localStorage.getItem(category) || "[]");
         store.push(entry);
         localStorage.setItem(category, JSON.stringify(store));
@@ -72,10 +69,21 @@ async function dbDelete(category, id) {
     });
 }
 
+// Migrate any existing photos from localStorage into IndexedDB (runs once)
+async function migratePhotos() {
+    const old = JSON.parse(localStorage.getItem('photos') || "[]");
+    if (old.length === 0) return;
+    const migrated = localStorage.getItem('photos_migrated');
+    if (migrated) return;
+    for (const item of old) {
+        await dbAdd('photos', { author: item.author, content: item.content, caption: item.caption || '', date: item.date });
+    }
+    localStorage.setItem('photos_migrated', 'true');
+    localStorage.removeItem('photos');
+}
+
 // ============================================================
-// IMAGE COMPRESSION (canvas resize before saving)
-// Shrinks photos to max 1200px wide, quality 0.82 — looks
-// great but takes up ~10x less space than the original
+// IMAGE COMPRESSION
 // ============================================================
 function compressImage(file, maxWidth = 1200, quality = 0.82) {
     return new Promise((resolve) => {
@@ -200,13 +208,11 @@ window.handleSubmission = async (category) => {
         saveBtn.disabled = true;
 
         if (files) {
-            let saved = 0;
             for (let i = 0; i < files.length; i++) {
                 saveBtn.textContent = `Saving ${i + 1} of ${files.length}...`;
                 try {
                     const content = await compressImage(files[i]);
                     await dbAdd(category, { author, content, caption, date });
-                    saved++;
                 } catch(e) {
                     showModalError(`Couldn't save: ${files[i].name}`);
                 }
@@ -339,6 +345,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (isUnlocked) {
         if (gate) gate.remove();
+        await migratePhotos();
         await renderContent();
 
         setTimeout(() => {
@@ -353,30 +360,45 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function renderContent() {
-    for (const cat of ['memories', 'awesome', 'photos']) {
+    // Memories and Awesome — full card with header as before
+    for (const cat of ['memories', 'awesome']) {
         const list = document.getElementById(`${cat}-list`);
         if (!list) continue;
-
         const data = await dbGetAll(cat);
-
-        list.innerHTML = data.map((item) => {
-            // IndexedDB items have an auto 'id', localStorage items use array index
-            const deleteId = item.id !== undefined ? item.id : data.indexOf(item);
-            return `
-                <div class="sanctuary-card">
-                    <div class="card-header">
-                        <span class="author-tag">FROM: ${item.author}</span>
-                        <span class="date-tag">${item.date}</span>
-                        <button class="del-btn" onclick="askDelete('${cat}', ${deleteId})">×</button>
-                    </div>
-                    <div class="card-body">
-                        ${cat === 'photos' ? `
-                            <img src="${item.content}">
-                            ${item.caption ? `<p style="margin-top:15px; font-style:italic; opacity:0.8;">${item.caption}</p>` : ''}
-                        ` : `<p>${item.content}</p>`}
-                    </div>
+        list.innerHTML = data.map((item, i) => `
+            <div class="sanctuary-card">
+                <div class="card-header">
+                    <span class="author-tag">FROM: ${item.author}</span>
+                    <span class="date-tag">${item.date}</span>
+                    <button class="del-btn" onclick="askDelete('${cat}', ${i})">×</button>
                 </div>
-            `;
-        }).join('');
+                <div class="card-body">
+                    <p>${item.content}</p>
+                </div>
+            </div>
+        `).join('');
     }
+
+    // Photos — clean image-only cards, delete button overlaid on hover
+    const photoList = document.getElementById('photos-list');
+    if (!photoList) return;
+    const photos = await dbGetAll('photos');
+    photoList.innerHTML = photos.map((item) => `
+        <div class="photo-card" style="position:relative; break-inside:avoid; margin-bottom:20px; display:inline-block; width:100%; border-radius:20px; overflow:hidden; cursor:pointer;">
+            <img src="${item.content}" style="width:100%; display:block; border-radius:20px;">
+            ${item.caption ? `<p style="position:absolute; bottom:0; left:0; right:0; margin:0; padding:10px 14px; background:linear-gradient(transparent, rgba(0,0,0,0.75)); font-style:italic; font-size:0.8rem; opacity:0.9;">${item.caption}</p>` : ''}
+            <button
+                onclick="askDelete('photos', ${item.id})"
+                style="position:absolute; top:10px; right:10px; background:rgba(255,59,48,0.85); color:white; border:none; width:28px; height:28px; border-radius:50%; font-size:1rem; cursor:pointer; opacity:0; transition:opacity 0.2s; line-height:1;"
+                class="photo-del-btn"
+            >×</button>
+        </div>
+    `).join('');
+
+    // Show delete button on hover
+    photoList.querySelectorAll('.photo-card').forEach(card => {
+        const btn = card.querySelector('.photo-del-btn');
+        card.addEventListener('mouseenter', () => btn.style.opacity = '1');
+        card.addEventListener('mouseleave', () => btn.style.opacity = '0');
+    });
 }
