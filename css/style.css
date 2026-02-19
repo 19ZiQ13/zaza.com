@@ -70,7 +70,8 @@ body::before {
 }
 
 /* --- THE PASSWORD GATE --- */
-#auth-gate {
+#auth-gate,
+#message-auth-gate {
     position: fixed; inset: 0; background: #000; z-index: 20000;
     display: flex; justify-content: center; align-items: center;
 }

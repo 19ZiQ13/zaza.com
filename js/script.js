@@ -1,4 +1,4 @@
-const ACCESS_KEY = "1234";
+const ACCESS_KEY = "1234";  // Main site password
 
 // 1. AUTHENTICATION
 window.unlockHub = function() {
@@ -9,11 +9,17 @@ window.unlockHub = function() {
     } else if (input) {
         input.style.borderColor = "#ff3b30";
         input.value = "";
+        input.placeholder = "❌ Wrong key";
+        setTimeout(() => {
+            input.placeholder = "••••";
+            input.style.borderColor = "rgba(255, 255, 255, 0.1)";
+        }, 2000);
     }
 };
 
 window.logout = () => {
     localStorage.removeItem('hub_unlocked');
+    localStorage.removeItem('message_unlocked');
     location.reload();
 };
 

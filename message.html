@@ -5,81 +5,83 @@
     <title>Sanctuary | Message</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body class="message-page">
+
 <div id="auth-gate">
     <div class="auth-card">
         <h1>Access Key</h1>
-        <input type="password" id="pass-input" placeholder="••••••••••">
-        <button class="unlock-btn" onclick="unlockHub()">Unlock</button>
+        <input type="password" id="pass-input" placeholder="••••">
+        <button class="unlock-btn" onclick="unlockHub()">Unlock Sanctuary</button>
     </div>
 </div>
 
-<nav class="nav-pill">
+<div id="message-auth-gate" style="display:none;">
+    <div class="auth-card">
+        <h1>Private Message</h1>
+        <input type="password" id="message-pass-input" placeholder="••••">
+        <button class="unlock-btn" onclick="unlockMessage()">Unlock Message</button>
+    </div>
+</div>
+
+<nav class="nav-pill" style="display:none;">
     <a href="index.html">Home</a>
-    <a href="message.html">Message</a>
+    <a href="message.html" class="active">Message</a>
     <a href="memories.html">Memories</a>
     <a href="photos.html">Photos</a>
     <a href="awesome.html">Awesome</a>
     <button class="logout-btn" onclick="logout()">Logout</button>
 </nav>
 
-<main class="container">
+<main class="container" style="display:none;">
     <div class="speech-bubble" style="max-width:800px; margin:0 auto;">
-        <h2 style="color:var(--neon); margin-top:0;">To You,</h2>
-        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
-            Dear you,
-            Happy 18th birthday.
+        <h2 style="color:var(--neon); margin-top:0;">Dear Sunny,</h2>
+
+        <p class="typing-text">
+            Happy 18th birthday!
             What a long way you've already come, right?
-            It's almost unbelievable that I've known you for a year now—and that I get to be here as you step into such an important milestone.
-            I wanted to give you something that wouldn't disappear after today—something you could come back to.
+            It's almost unbelievable that I've known you for a year now — and that I get to be here as you step into such an important milestone.
+            I wanted to give you something that wouldn't disappear after today — something you could come back to.
             Not just words to read once, but a space to exist in.
             A place where you can create, wander, look back on good moments, or simply rest when everything feels like too much.
             Somewhere that gently reminds you that you're not alone, that you belong, and that your presence matters more than you probably realize.
         </p>
-        <br>
-        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
+
+        <p class="typing-text">
             I'm really grateful I met you.
-            It happened in a way that felt unplanned—almost incidental—and yet it's become something I can't imagine being random.
+            It happened in a way that felt unplanned — almost incidental — and yet it's become something I can't imagine being random.
             Some people pass through your life quickly; others arrive quietly and stay in ways you only understand later.
             You're the kind of person who listens without rushing, who shows up without needing to be asked,
-            who somehow follows every half-formed thought, every strange idea, every sudden tangent—and makes space for all of it.
+            who somehow follows every half-formed thought, every strange idea, every sudden tangent — and makes space for all of it.
             That kind of understanding is rare, and I never take it for granted.
         </p>
-        <br>
-        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
+
+        <p class="typing-text">
             What I'm trying to give you with this isn't just a birthday gesture.
             It's something that holds what words don't always manage to say:
             appreciation, trust, the comfort of being known.
             Something that says you mattered enough for this to be built for you.
-            Because you do—more than you realize most days.
-            And because the way you exist in my life—steady, thoughtful,
-            present—means more than I could ever fit into a single message.
+            Because you do — more than you realize most days.
+            And because the way you exist in my life — steady, thoughtful,
+            present — means more than I could ever fit into a single message.
         </p>
-        <br>
-        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
+
+        <p class="typing-text">
             There are people who bring light into your life without trying to.
-            People you find yourself turning toward instinctively, the way sunflowers turn toward the sun—not because they're told to,
-            but because that's where warmth lives. You've been that kind of presence for me, Sunny,
-            even in moments you may not notice—through the hard days, the heavy thoughts, and everything in between.
-            And I hope, quietly and consistently, I can be that for you too (at least come close to it).
-            Someone who stands nearby, reminding you that even when life feels sharp or overwhelming, you don't have to face it alone.
+            People you find yourself turning toward instinctively, the way sunflowers turn toward the sun — not because they're told to,
+            but because that's where warmth lives.
+            You've been that kind of presence for me, Sunny.
+            And I hope, quietly and consistently, I can be that for you too.
         </p>
-        <br>
-        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
+
+        <p class="typing-text">
             Turning eighteen feels like standing at the edge of something new.
-            Not because everything suddenly changes—but because the world opens a little wider,
+            Not because everything suddenly changes — but because the world opens a little wider,
             and the choices begin to feel more like your own.
-            These years are for exploring, for becoming, for learning who you are when no one else is deciding for you.
-            There is so much ahead of you, and the world hasn't yet seen all that you are capable of becoming.
+            There is so much ahead of you.
             I'm really excited to watch it unfold.
         </p>
-        <br>
-        <p class="typing-text" style="font-size:1.2rem; line-height:1.6;">
-            So make this place yours. Shape it, add to it, let it grow alongside you.
-            And whenever you need a reminder—on the loud days or the quiet ones—come back here.
-            Let it remind you of how deeply you are valued.
-        </p>
-        <br>
+
         <p class="typing-text" style="margin-top:30px; font-weight:900;">
             — With all my love,
             Z 🌻
@@ -88,45 +90,115 @@
 </main>
 
 <script src="js/script.js"></script>
+
 <script>
-    // Full-page sequential typewriter effect
-    document.addEventListener("DOMContentLoaded", () => {
-        if (localStorage.getItem('hub_unlocked') === 'true') {
+    const MESSAGE_PRIVATE_KEY = "9876";
 
-            // Get all paragraphs with typing-text class
-            const typingElements = document.querySelectorAll('.typing-text');
+    window.showMessageGate = function () {
+        const msgGate = document.getElementById('message-auth-gate');
+        if (msgGate) {
+            msgGate.style.cssText = 'display:flex; position:fixed; inset:0; background:#000; z-index:20000; justify-content:center; align-items:center;';
+        }
+        setTimeout(() => {
+            const input = document.getElementById('message-pass-input');
+            if (input) input.focus();
+        }, 100);
+    };
 
-            // Store original text and clear elements
-            const paragraphs = Array.from(typingElements).map(el => {
-                const text = el.textContent.trim();
-                el.textContent = '';
-                return { element: el, text: text };
-            });
+    window.unlockMessage = function () {
+        const input = document.getElementById('message-pass-input');
+        if (!input) return;
 
-            // Recursive typewriter that chains paragraphs one after another
-            function typeSequence(paraIndex, charIndex) {
-                // If we've finished all paragraphs, stop
-                if (paraIndex >= paragraphs.length) return;
+        if (input.value === MESSAGE_PRIVATE_KEY) {
+            localStorage.setItem('message_unlocked', 'true');
+            document.getElementById('message-auth-gate').remove();
+            document.querySelector('nav').style.display = '';
+            document.querySelector('main').style.display = '';
+            if (typeof initCustomCursor === 'function') initCustomCursor();
+            startTypingEffect();
+        } else {
+            input.style.borderColor = "#ff3b30";
+            input.value = "";
+            input.placeholder = "Wrong key";
+            setTimeout(() => {
+                input.placeholder = "••••••••••";
+                input.style.borderColor = "rgba(255,255,255,0.1)";
+            }, 2000);
+        }
+    };
 
-                const current = paragraphs[paraIndex];
+    function startTypingEffect() {
+        const elements = document.querySelectorAll('.typing-text');
+        const paragraphs = Array.from(elements).map(el => {
+            const text = el.textContent.trim();
+            el.textContent = '';
+            return { el, text };
+        });
 
-                // If we've finished the current paragraph, move to the next after a short pause
-                if (charIndex >= current.text.length) {
-                    setTimeout(() => typeSequence(paraIndex + 1, 0), 400);
-                    return;
-                }
-
-                // Type one character
-                current.element.textContent += current.text.charAt(charIndex);
-
-                // Schedule the next character
-                setTimeout(() => typeSequence(paraIndex, charIndex + 1), 30);
+        function typePara(p, i) {
+            if (p >= paragraphs.length) return;
+            if (i >= paragraphs[p].text.length) {
+                setTimeout(() => typePara(p + 1, 0), 400);
+                return;
             }
+            paragraphs[p].el.textContent += paragraphs[p].text[i];
+            setTimeout(() => typePara(p, i + 1), 30);
+        }
 
-            // Kick off the sequence after a short initial delay
-            setTimeout(() => typeSequence(0, 0), 500);
+        setTimeout(() => typePara(0, 0), 500);
+    }
+
+    document.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            const msgGate = document.getElementById('message-auth-gate');
+            if (msgGate && msgGate.style.display !== 'none') {
+                unlockMessage();
+            }
         }
     });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const hubUnlocked = localStorage.getItem('hub_unlocked') === 'true';
+        const msgUnlocked = localStorage.getItem('message_unlocked') === 'true';
+
+        const mainGate = document.getElementById('auth-gate');
+
+        if (hubUnlocked) {
+            if (mainGate) mainGate.remove();
+
+            if (msgUnlocked) {
+                const msgGate = document.getElementById('message-auth-gate');
+                if (msgGate) msgGate.remove();
+                document.querySelector('nav').style.display = '';
+                document.querySelector('main').style.display = '';
+                if (typeof initCustomCursor === 'function') initCustomCursor();
+                startTypingEffect();
+            } else {
+                showMessageGate();
+            }
+        }
+    });
+
+    const _origUnlockHub = window.unlockHub;
+    window.unlockHub = function () {
+        const input = document.getElementById('pass-input');
+        const ACCESS_KEY = "1234";
+        if (input && input.value === ACCESS_KEY) {
+            localStorage.setItem('hub_unlocked', 'true');
+            const mainGate = document.getElementById('auth-gate');
+            if (mainGate) mainGate.remove();
+            showMessageGate();
+        } else if (input) {
+            input.style.borderColor = "#ff3b30";
+            input.value = "";
+            input.placeholder = "Wrong key";
+            setTimeout(() => {
+                input.placeholder = "••••";
+                input.style.borderColor = "rgba(255, 255, 255, 0.1)";
+            }, 2000);
+        }
+    };
 </script>
+
 </body>
 </html>
