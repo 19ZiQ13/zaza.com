@@ -134,8 +134,12 @@ window.logout = () => {
 // ============================================================
 // 2. MODAL SYSTEM
 // ============================================================
+
+const EMOJI_LIST = ['❤️','🌻','✨','🎉','😊','🥹','💫','🌙','🔥','💜','🌈','🎶','🥂','💌','🌸','😂','🤝','👑','🙈','💪','🌊','🍀','🎯','🫶','😭','💀','🫂','🐾','🌺','⚡'];
+
 window.addItem = function(category) {
     const isPhoto = category === 'photos';
+    const isTextCat = category === 'memories' || category === 'awesome';
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.id = 'active-modal';
@@ -143,7 +147,7 @@ window.addItem = function(category) {
     const today = new Date().toISOString().split('T')[0];
 
     overlay.innerHTML = `
-        <div class="sanctuary-card modal-content">
+        <div class="sanctuary-card modal-content" style="max-height:90vh; overflow-y:auto;">
             <h2 style="margin:0; text-align:center;">New ${isPhoto ? 'Photos' : category.slice(0,-1)}</h2>
 
             <span class="modal-label">From:</span>
@@ -164,6 +168,46 @@ window.addItem = function(category) {
                 <span class="modal-label">Content:</span>
                 <textarea id="m-content" class="sanctuary-input" rows="4" placeholder="Write something..."></textarea>
             `}
+
+            ${isTextCat ? `
+                <span class="modal-label">Add a little something (optional):</span>
+                <div style="display:flex; gap:10px; margin-bottom:6px;">
+                    <button type="button" id="tab-emoji" onclick="switchAccentTab('emoji')"
+                        style="flex:1; padding:8px; border-radius:10px; border:2px solid var(--neon); background:var(--neon); color:#000; font-weight:800; font-size:0.8rem; cursor:pointer;">
+                        😊 Emoji
+                    </button>
+                    <button type="button" id="tab-img" onclick="switchAccentTab('img')"
+                        style="flex:1; padding:8px; border-radius:10px; border:2px solid rgba(255,255,255,0.15); background:transparent; color:white; font-weight:800; font-size:0.8rem; cursor:pointer;">
+                        🖼 Image
+                    </button>
+                    <button type="button" id="tab-none" onclick="switchAccentTab('none')"
+                        style="flex:1; padding:8px; border-radius:10px; border:2px solid rgba(255,255,255,0.15); background:transparent; color:rgba(255,255,255,0.4); font-weight:800; font-size:0.8rem; cursor:pointer;">
+                        None
+                    </button>
+                </div>
+
+                <!-- emoji picker panel -->
+                <div id="panel-emoji" style="display:flex; flex-wrap:wrap; gap:6px; padding:10px; background:rgba(0,0,0,0.3); border-radius:14px;">
+                    ${EMOJI_LIST.map(e => `
+                        <button type="button" onclick="selectEmoji('${e}')"
+                            style="font-size:1.4rem; background:none; border:2px solid transparent; border-radius:8px; padding:4px 6px; cursor:pointer; transition:all 0.15s;"
+                            class="emoji-opt">${e}</button>
+                    `).join('')}
+                    <div style="width:100%; margin-top:6px;">
+                        <input type="text" id="emoji-custom" class="sanctuary-input" placeholder="Or type any emoji / paste one..." style="font-size:1.2rem;"
+                            oninput="selectEmoji(this.value)">
+                    </div>
+                </div>
+
+                <!-- image upload panel -->
+                <div id="panel-img" style="display:none;">
+                    <input type="file" id="m-accent-file" class="sanctuary-input" accept="image/*" style="padding:10px;">
+                    <div id="accent-preview" style="margin-top:8px;"></div>
+                </div>
+
+                <input type="hidden" id="m-accent" value="">
+                <input type="hidden" id="m-accent-type" value="emoji">
+            ` : ''}
 
             <div id="m-error" style="color:#ff3b30; font-size:0.8rem; margin-top:8px; display:none;"></div>
 
@@ -189,6 +233,63 @@ window.addItem = function(category) {
             }
         });
     }
+
+    if (isTextCat) {
+        // Set default selected emoji
+        selectEmoji('❤️');
+
+        const accentFile = document.getElementById('m-accent-file');
+        if (accentFile) {
+            accentFile.addEventListener('change', async function() {
+                if (this.files[0]) {
+                    const compressed = await compressImage(this.files[0], 300, 0.8);
+                    document.getElementById('m-accent').value = compressed;
+                    document.getElementById('m-accent-type').value = 'image';
+                    document.getElementById('accent-preview').innerHTML =
+                        `<img src="${compressed}" style="height:70px; border-radius:10px; object-fit:cover;">`;
+                }
+            });
+        }
+    }
+};
+
+window.switchAccentTab = function(tab) {
+    const tabs = { emoji: 'tab-emoji', img: 'tab-img', none: 'tab-none' };
+    const panels = { emoji: 'panel-emoji', img: 'panel-img' };
+
+    Object.entries(tabs).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const active = key === tab;
+        el.style.background = active ? 'var(--neon)' : 'transparent';
+        el.style.color = active ? '#000' : (key === 'none' ? 'rgba(255,255,255,0.4)' : 'white');
+        el.style.borderColor = active ? 'var(--neon)' : 'rgba(255,255,255,0.15)';
+    });
+
+    Object.entries(panels).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = key === tab ? (key === 'emoji' ? 'flex' : 'block') : 'none';
+    });
+
+    if (tab === 'none') {
+        document.getElementById('m-accent').value = '';
+        document.getElementById('m-accent-type').value = 'none';
+    } else if (tab === 'emoji') {
+        document.getElementById('m-accent-type').value = 'emoji';
+    } else {
+        document.getElementById('m-accent-type').value = 'image';
+    }
+};
+
+window.selectEmoji = function(emoji) {
+    if (!emoji.trim()) return;
+    document.getElementById('m-accent').value = emoji.trim();
+    document.getElementById('m-accent-type').value = 'emoji';
+    // highlight selected
+    document.querySelectorAll('.emoji-opt').forEach(btn => {
+        btn.style.borderColor = btn.textContent.trim() === emoji.trim() ? 'var(--neon)' : 'transparent';
+        btn.style.background = btn.textContent.trim() === emoji.trim() ? 'rgba(0,242,255,0.15)' : 'none';
+    });
 };
 
 window.handleSubmission = async (category) => {
@@ -230,9 +331,11 @@ window.handleSubmission = async (category) => {
         }
     } else {
         const content = document.getElementById('m-content').value;
+        const accentVal = document.getElementById('m-accent') ? document.getElementById('m-accent').value : '';
+        const accentType = document.getElementById('m-accent-type') ? document.getElementById('m-accent-type').value : 'none';
         if (author && content) {
             try {
-                await dbAdd(category, { author, content, caption, date });
+                await dbAdd(category, { author, content, date, accent: accentVal, accentType });
                 location.reload();
             } catch(e) {
                 showModalError('Storage full! Please delete some old entries first.');
@@ -365,14 +468,19 @@ async function renderContent() {
     const memoriesList = document.getElementById('memories-list');
     if (memoriesList) {
         const data = await dbGetAll('memories');
-        memoriesList.innerHTML = data.map((item, i) => `
+        memoriesList.innerHTML = data.map((item, i) => {
+            const hasAccent = item.accent && item.accentType !== 'none';
+            const accentHtml = !hasAccent ? '' : item.accentType === 'emoji'
+                ? `<div style="font-size:2.8rem; line-height:1; flex-shrink:0; margin-top:4px; filter:drop-shadow(0 0 8px rgba(255,255,255,0.3));">${item.accent}</div>`
+                : `<img src="${item.accent}" style="width:72px; height:72px; border-radius:14px; object-fit:cover; flex-shrink:0; border:2px solid var(--neon); box-shadow:0 0 12px var(--neon);">`;
+            return `
             <div class="sanctuary-card memory-entry" style="position:relative; overflow:visible; margin-bottom:30px;">
-                <!-- giant decorative quote mark -->
                 <div style="position:absolute; top:-18px; left:24px; font-size:5rem; line-height:1; color:var(--neon); opacity:0.25; font-family:Georgia,serif; pointer-events:none; user-select:none;">"</div>
-
                 <div style="padding:30px 30px 20px;">
-                    <p style="font-size:1.05rem; line-height:1.8; margin:0 0 20px; font-style:italic; color:rgba(255,255,255,0.88);">${item.content}</p>
-
+                    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:20px;">
+                        ${accentHtml}
+                        <p style="font-size:1.05rem; line-height:1.8; margin:0; font-style:italic; color:rgba(255,255,255,0.88); flex:1;">${item.content}</p>
+                    </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.08); padding-top:14px;">
                         <div style="display:flex; align-items:center; gap:10px;">
                             <div style="width:32px; height:32px; border-radius:50%; background:var(--neon); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:0.75rem; color:#000; flex-shrink:0;">
@@ -387,23 +495,25 @@ async function renderContent() {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     // ── AWESOME ── bold highlight cards with a star accent
     const awesomeList = document.getElementById('awesome-list');
     if (awesomeList) {
         const data = await dbGetAll('awesome');
-        awesomeList.innerHTML = data.map((item, i) => `
+        awesomeList.innerHTML = data.map((item, i) => {
+            const hasAccent = item.accent && item.accentType !== 'none';
+            const accentHtml = !hasAccent
+                ? `<div style="font-size:1.8rem; line-height:1; flex-shrink:0; margin-top:2px;">⭐</div>`
+                : item.accentType === 'emoji'
+                    ? `<div style="font-size:2.2rem; line-height:1; flex-shrink:0; margin-top:2px; filter:drop-shadow(0 0 8px rgba(255,255,255,0.3));">${item.accent}</div>`
+                    : `<img src="${item.accent}" style="width:64px; height:64px; border-radius:12px; object-fit:cover; flex-shrink:0; border:2px solid var(--neon); box-shadow:0 0 12px var(--neon);">`;
+            return `
             <div class="sanctuary-card awesome-entry" style="margin-bottom:24px; position:relative;">
-
-                <!-- neon accent bar on the left -->
                 <div style="position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--neon); border-radius:4px 0 0 4px; box-shadow:0 0 10px var(--neon);"></div>
-
                 <div style="padding:22px 24px 22px 30px; display:flex; align-items:flex-start; gap:16px;">
-                    <!-- star icon -->
-                    <div style="font-size:1.6rem; line-height:1; flex-shrink:0; margin-top:2px;">⭐</div>
-
+                    ${accentHtml}
                     <div style="flex:1;">
                         <p style="margin:0 0 14px; font-size:1rem; line-height:1.7; color:rgba(255,255,255,0.9); font-weight:500;">${item.content}</p>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -413,7 +523,7 @@ async function renderContent() {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     // ── PHOTOS ── clean image-only cards, delete on hover
