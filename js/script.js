@@ -1,5 +1,8 @@
 const ACCESS_KEY = "1234";
+const supabaseUrl = "https://azbfywvfdpzenzgsuiq.supabase.co"
+const supabaseKey = "sb_publishable_xIClRS76z5eWxpolC1qHrw_dIDEoOEE"
 
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey)
 // ============================================================
 // INDEXEDDB STORAGE
 // ============================================================
