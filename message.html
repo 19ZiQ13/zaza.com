@@ -88,6 +88,7 @@
         </p>
     </div>
 </main>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/script.js"></script>
 
@@ -121,7 +122,7 @@
             input.value = "";
             input.placeholder = "Wrong key";
             setTimeout(() => {
-                input.placeholder = "••••••••••";
+                input.placeholder = "••••";
                 input.style.borderColor = "rgba(255,255,255,0.1)";
             }, 2000);
         }
@@ -161,9 +162,8 @@
         const hubUnlocked = localStorage.getItem('hub_unlocked') === 'true';
         const msgUnlocked = localStorage.getItem('message_unlocked') === 'true';
 
-        const mainGate = document.getElementById('auth-gate');
-
         if (hubUnlocked) {
+            const mainGate = document.getElementById('auth-gate');
             if (mainGate) mainGate.remove();
 
             if (msgUnlocked) {
@@ -179,25 +179,25 @@
         }
     });
 
-    const _origUnlockHub = window.unlockHub;
-    window.unlockHub = function () {
-        const input = document.getElementById('pass-input');
-        const ACCESS_KEY = "1234";
-        if (input && input.value === ACCESS_KEY) {
-            localStorage.setItem('hub_unlocked', 'true');
-            const mainGate = document.getElementById('auth-gate');
-            if (mainGate) mainGate.remove();
-            showMessageGate();
-        } else if (input) {
-            input.style.borderColor = "#ff3b30";
-            input.value = "";
-            input.placeholder = "Wrong key";
-            setTimeout(() => {
-                input.placeholder = "••••";
-                input.style.borderColor = "rgba(255, 255, 255, 0.1)";
-            }, 2000);
-        }
-    };
+    // Override unlockHub ONLY for message page — after hub unlock, show message gate
+    // Must run after script.js so we wrap the original
+    document.addEventListener("DOMContentLoaded", () => {
+        const originalUnlockHub = window.unlockHub;
+        window.unlockHub = function () {
+            const input = document.getElementById('pass-input');
+            const val = input ? input.value : '';
+
+            // Call the real unlockHub from script.js first
+            originalUnlockHub();
+
+            // If it succeeded (hub is now unlocked), show the message gate
+            if (localStorage.getItem('hub_unlocked') === 'true') {
+                const mainGate = document.getElementById('auth-gate');
+                if (mainGate) mainGate.remove();
+                showMessageGate();
+            }
+        };
+    });
 </script>
 
 </body>
