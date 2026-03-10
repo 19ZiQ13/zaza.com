@@ -5,7 +5,8 @@ const ACCESS_KEY = "1234";          // Primary / owner key — can delete
 const SUPABASE_URL  = "https://azbfywvtfdpzenzgsuiq.supabase.co";
 const SUPABASE_ANON = "sb_publishable_xIClRS76z5eWxpolC1qHrw_dIDEoOEE";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+if (!window._sb) window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const supabase = window._sb;
 
 // ============================================================
 // HELPERS
