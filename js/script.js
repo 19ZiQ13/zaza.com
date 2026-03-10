@@ -5,8 +5,11 @@ const ACCESS_KEY = "1234";          // Primary / owner key — can delete
 const SUPABASE_URL  = "https://azbfywvtfdpzenzgsuiq.supabase.co";
 const SUPABASE_ANON = "sb_publishable_xIClRS76z5eWxpolC1qHrw_dIDEoOEE";
 
-if (!window._sb) window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-const supabase = window._sb;
+// Use a unique variable name to avoid conflicts with any inline supabase declarations
+if (!window._db) {
+    window._db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+}
+const db = window._db;
 
 // ============================================================
 // HELPERS
@@ -49,13 +52,13 @@ async function uploadImageToStorage(base64DataUrl, folder = 'photos') {
     const ext   = 'jpg';
     const path  = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const { error } = await supabase.storage
+    const { error } = await db.storage
         .from('sanctuary-media')
         .upload(path, blob, { contentType: 'image/jpeg', upsert: false });
 
     if (error) throw error;
 
-    const { data } = supabase.storage
+    const { data } = db.storage
         .from('sanctuary-media')
         .getPublicUrl(path);
 
@@ -286,7 +289,7 @@ window.handleSubmission = async (category) => {
                 try {
                     const compressed = await compressImage(files[i]);
                     const publicUrl  = await uploadImageToStorage(compressed, 'photos');
-                    const { error }  = await supabase.from('photos').insert({ author, content: publicUrl, caption, date });
+                    const { error }  = await db.from('photos').insert({ author, content: publicUrl, caption, date });
                     if (error) throw error;
                 } catch (e) {
                     showModalError(`Upload failed: ${files[i].name} — ${e.message}`);
@@ -295,7 +298,7 @@ window.handleSubmission = async (category) => {
                 }
             }
         } else {
-            const { error } = await supabase.from('photos').insert({ author, content: urlInput, caption, date });
+            const { error } = await db.from('photos').insert({ author, content: urlInput, caption, date });
             if (error) { showModalError(error.message); saveBtn.disabled = false; saveBtn.textContent = 'Save'; return; }
         }
 
@@ -319,7 +322,7 @@ window.handleSubmission = async (category) => {
             }
         }
 
-        const { error } = await supabase
+        const { error } = await db
             .from(category)
             .insert({ author, content, date, accent: finalAccent, accent_type: accentType });
 
@@ -358,7 +361,7 @@ window.askDelete = (table, id) => {
 
 window.confirmDelete = async (table, id) => {
     if (!isOwner()) return;
-    const { error } = await supabase.from(table).delete().eq('id', id);
+    const { error } = await db.from(table).delete().eq('id', id);
     if (error) { alert('Delete failed: ' + error.message); return; }
     location.reload();
 };
@@ -375,7 +378,7 @@ async function renderContent() {
     // ── MEMORIES ──
     const memoriesList = document.getElementById('memories-list');
     if (memoriesList) {
-        const { data, error } = await supabase.from('memories').select('*').order('date', { ascending: false });
+        const { data, error } = await db.from('memories').select('*').order('date', { ascending: false });
         if (error) { memoriesList.innerHTML = `<p style="opacity:.5">Could not load entries.</p>`; }
         else {
             memoriesList.innerHTML = (data || []).map(item => {
@@ -412,7 +415,7 @@ async function renderContent() {
     // ── AWESOME ──
     const awesomeList = document.getElementById('awesome-list');
     if (awesomeList) {
-        const { data, error } = await supabase.from('awesome').select('*').order('date', { ascending: false });
+        const { data, error } = await db.from('awesome').select('*').order('date', { ascending: false });
         if (error) { awesomeList.innerHTML = `<p style="opacity:.5">Could not load entries.</p>`; }
         else {
             awesomeList.innerHTML = (data || []).map(item => {
@@ -443,7 +446,7 @@ async function renderContent() {
     // ── PHOTOS ──
     const photoList = document.getElementById('photos-list');
     if (photoList) {
-        const { data, error } = await supabase.from('photos').select('*').order('date', { ascending: false });
+        const { data, error } = await db.from('photos').select('*').order('date', { ascending: false });
         if (error) { photoList.innerHTML = `<p style="opacity:.5">Could not load photos.</p>`; }
         else {
             photoList.innerHTML = (data || []).map(item => `
